@@ -6,7 +6,6 @@
 payload := minitel.Payload{
 	Title: "Your DB is on fire!",
 	Body: "...",
-	Id: "84838298-989d-4409-b148-6abef06df43f",
 }
 
 payload.Target.Id = "84838298-989d-4409-b148-6abef06df43f"
