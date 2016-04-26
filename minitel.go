@@ -52,7 +52,7 @@ type Result struct {
 }
 
 type Client interface {
-	Post(Payload) (Result, error)
+	Notify(Payload) (Result, error)
 }
 
 func New(URL string) (Client, error) {
@@ -67,7 +67,7 @@ type client struct {
 	url string
 }
 
-func (c *client) Post(p Payload) (result Result, err error) {
+func (c *client) Notify(p Payload) (result Result, err error) {
 	// Validate the payload
 	if err := p.Validate(); err != nil {
 		return result, err
