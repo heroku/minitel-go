@@ -14,6 +14,9 @@ payload.Target.Type = minitel.App
 payload.Action.Label = "View Invoice"
 payload.Action.URL = "https://view.your.invoice/yolo"
 
-client := minitel.New("https://user:pass@telex.heroku.com")
+client, err := minitel.New("https://user:pass@telex.heroku.com")
+if err != nil {
+	log.Fatal(err)
+}
 client.Notify(payload)
 ```
