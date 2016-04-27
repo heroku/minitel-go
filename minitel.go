@@ -18,6 +18,30 @@ const (
 	User
 )
 
+func (t Type) MarshalJSON() ([]byte, error) {
+	switch t {
+	case App:
+		return []byte(`"app"`), nil
+	case User:
+		return []byte(`"user"`), nil
+	default:
+		return []byte(""), fmt.Errorf("unknown Type: %d", t)
+	}
+}
+
+func (t *Type) UnmarshalJSON(raw []byte) error {
+	switch string(raw) {
+	case `"app"`:
+		*t = App
+		return nil
+	case `"user"`:
+		*t = User
+		return nil
+	default:
+		return errors.New("can't unmarshal Type")
+	}
+}
+
 type Payload struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
@@ -25,12 +49,12 @@ type Payload struct {
 	Target struct {
 		Type Type   `json:"type"`
 		Id   string `json:"id"`
-	}
+	} `json:"target"`
 
 	Action struct {
 		Label string `json:"label"`
 		URL   string `json:"url"`
-	}
+	} `json:"action"`
 }
 
 var (
@@ -79,6 +103,13 @@ func (c *client) Notify(p Payload) (result Result, err error) {
 	if err := enc.Encode(p); err != nil {
 		return result, err
 	}
+	buf2 := &bytes.Buffer{}
+	enc = json.NewEncoder(buf2)
+	if err = enc.Encode(p); err != nil {
+		return result, err
+	}
+
+	fmt.Println(buf2.String())
 
 	// Do the HTTP POST
 	resp, err := http.Post(c.url+"/producer/messages", "application/json", buf)

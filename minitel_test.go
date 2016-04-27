@@ -45,7 +45,10 @@ func TestClient(t *testing.T) {
 	mux.HandleFunc("/producer/messages", func(w http.ResponseWriter, r *http.Request) {
 		var payload Payload
 		dec := json.NewDecoder(r.Body)
-		dec.Decode(&payload)
+		err := dec.Decode(&payload)
+		if err != nil {
+			t.Errorf("ERROR: in decode: %q", err)
+		}
 
 		if payload.Validate() != nil {
 			w.WriteHeader(http.StatusBadRequest)
