@@ -103,13 +103,6 @@ func (c *client) Notify(p Payload) (result Result, err error) {
 	if err := enc.Encode(p); err != nil {
 		return result, err
 	}
-	buf2 := &bytes.Buffer{}
-	enc = json.NewEncoder(buf2)
-	if err = enc.Encode(p); err != nil {
-		return result, err
-	}
-
-	fmt.Println(buf2.String())
 
 	// Do the HTTP POST
 	resp, err := http.Post(c.url+"/producer/messages", "application/json", buf)
