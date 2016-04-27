@@ -81,7 +81,7 @@ func (c *client) Notify(p Payload) (result Result, err error) {
 	}
 
 	// Do the HTTP POST
-	resp, err := http.Post(c.url, "application/json", buf)
+	resp, err := http.Post(c.url+"/producer/messages", "application/json", buf)
 	if err != nil {
 		return result, err
 	}

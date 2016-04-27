@@ -42,7 +42,7 @@ func TestPayloadCreation(t *testing.T) {
 
 func TestClient(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/producer/messages", func(w http.ResponseWriter, r *http.Request) {
 		var payload Payload
 		dec := json.NewDecoder(r.Body)
 		dec.Decode(&payload)
