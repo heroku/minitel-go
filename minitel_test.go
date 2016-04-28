@@ -59,6 +59,24 @@ func TestClient(t *testing.T) {
 		enc := json.NewEncoder(w)
 		enc.Encode(Result{Id: "727d27f8-589f-45b1-914e-dd613feaf4dc"})
 	})
+
+	mux.HandleFunc("/producer/messages/727d27f8-589f-45b1-914e-dd613feaf4dc/followups", func(w http.ResponseWriter, r *http.Request) {
+		var payload map[string]string
+		dec := json.NewDecoder(r.Body)
+		err := dec.Decode(&payload)
+		if err != nil {
+			t.Errorf("ERROR: in decode: %q", err)
+		}
+
+		if _, ok := payload["body"]; !ok {
+			t.Errorf("expected `body` parameter was not found")
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		enc := json.NewEncoder(w)
+		enc.Encode(Result{Id: "ffff27f8-589f-45b1-914e-dd613feaf4dc"})
+	})
+
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -77,5 +95,13 @@ func TestClient(t *testing.T) {
 	}
 	if res.Id != "727d27f8-589f-45b1-914e-dd613feaf4dc" {
 		t.Fatal("Expected result id to be 727d27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
+	}
+
+	res, err = c.Followup("727d27f8-589f-45b1-914e-dd613feaf4dc", "This is a followup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Id != "ffff27f8-589f-45b1-914e-dd613feaf4dc" {
+		t.Fatal("Expected result id to be ffff27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
 	}
 }
