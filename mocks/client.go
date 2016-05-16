@@ -72,3 +72,11 @@ func (c *MockClient) FollowupAndExpectSuccess() {
 func (c *MockClient) FollowupAndExpectFailure(err error) {
 	c.followupExpectations = append(c.followupExpectations, err)
 }
+func (c *MockClient) ExpectDone() {
+	if len(c.notifyExpectations) > 0 {
+		c.t.Errorf("%d Notify expectations left", len(c.notifyExpectations))
+	}
+	if len(c.followupExpectations) > 0 {
+		c.t.Errorf("%d Followup expectations left", len(c.followupExpectations))
+	}
+}

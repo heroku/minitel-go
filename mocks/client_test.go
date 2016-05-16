@@ -82,3 +82,15 @@ func TestFollowupSuccess(t *testing.T) {
 		t.Errorf("Expected no more expectations, got %q", err)
 	}
 }
+
+func TestExpectDone(t *testing.T) {
+	r := newTestReporterMock()
+	client, _ := NewMockClient(r)
+	client.NotifyAndExpectSuccess()
+	client.FollowupAndExpectSuccess()
+	client.ExpectDone()
+
+	if len(r.errors) != 2 {
+		t.Errorf("Expected 2 errors, got %d", len(r.errors))
+	}
+}
