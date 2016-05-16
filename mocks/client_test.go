@@ -20,6 +20,13 @@ func (trm *testReporterMock) Errorf(format string, args ...interface{}) {
 	trm.errors = append(trm.errors, fmt.Sprintf(format, args...))
 }
 
+func TestSatisfiesInterface(t *testing.T) {
+	var client interface{} = &MockClient{}
+	if _, ok := client.(minitel.Client); !ok {
+		t.Fatalf("MockClient cannot be used as minitel.Client")
+	}
+}
+
 func TestNotifySuccess(t *testing.T) {
 	r := newTestReporterMock()
 
