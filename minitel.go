@@ -16,6 +16,7 @@ type Type int
 const (
 	App Type = iota
 	User
+	Email
 )
 
 func (t Type) MarshalJSON() ([]byte, error) {
@@ -24,6 +25,8 @@ func (t Type) MarshalJSON() ([]byte, error) {
 		return []byte(`"app"`), nil
 	case User:
 		return []byte(`"user"`), nil
+	case Email:
+		return []byte(`"email"`), nil
 	default:
 		return []byte(""), fmt.Errorf("unknown Type: %d", t)
 	}
@@ -36,6 +39,9 @@ func (t *Type) UnmarshalJSON(raw []byte) error {
 		return nil
 	case `"user"`:
 		*t = User
+		return nil
+	case `"email"`:
+		*t = Email
 		return nil
 	default:
 		return errors.New("can't unmarshal Type")
