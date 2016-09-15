@@ -27,7 +27,7 @@ type MockClient struct {
 }
 
 var (
-	errNoMoreExpectations = errors.New("no more expecations")
+	errNoMoreExpectations = errors.New("no more expectations")
 )
 
 // NewMockClient returns a client that satisfies minitel.Client, but provides additional
@@ -53,7 +53,7 @@ func (c *MockClient) Notify(p minitel.Payload) (result minitel.Result, err error
 		}
 		return minitel.Result{}, next
 	}
-	c.t.Errorf("no more notify expecations")
+	c.t.Errorf("no more notify expectations")
 	return minitel.Result{}, errNoMoreExpectations
 }
 
@@ -71,7 +71,7 @@ func (c *MockClient) Followup(id, body string) (result minitel.Result, err error
 		return minitel.Result{}, next
 	}
 
-	c.t.Errorf("no more followup expecations")
+	c.t.Errorf("no more followup expectations")
 	return minitel.Result{}, errNoMoreExpectations
 }
 
