@@ -31,7 +31,7 @@ func TestNotifySuccess(t *testing.T) {
 	r := newTestReporterMock()
 
 	errFoo := errors.New("error foo")
-	client, _ := NewMockClient(r)
+	client := NewMockClient(r)
 	client.NotifyAndExpectSuccess()
 	client.NotifyAndExpectFailure(errFoo)
 
@@ -59,7 +59,7 @@ func TestFollowupSuccess(t *testing.T) {
 	r := newTestReporterMock()
 
 	errFoo := errors.New("error foo")
-	client, _ := NewMockClient(r)
+	client := NewMockClient(r)
 	client.FollowupAndExpectSuccess()
 	client.FollowupAndExpectFailure(errFoo)
 
@@ -85,7 +85,7 @@ func TestFollowupSuccess(t *testing.T) {
 
 func TestExpectDone(t *testing.T) {
 	r := newTestReporterMock()
-	client, _ := NewMockClient(r)
+	client := NewMockClient(r)
 	client.NotifyAndExpectSuccess()
 	client.FollowupAndExpectSuccess()
 	client.ExpectDone()

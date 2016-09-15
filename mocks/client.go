@@ -32,12 +32,12 @@ var (
 
 // NewMockClient returns a client that satisfies minitel.Client, but provides additional
 // methods to be used for setting expectations around calls to Notify and Followup.
-func NewMockClient(t ErrorReporter) (*MockClient, error) {
+func NewMockClient(t ErrorReporter) *MockClient {
 	return &MockClient{
 		t:                    t,
 		notifyExpectations:   make([]error, 0),
 		followupExpectations: make([]error, 0),
-	}, nil
+	}
 }
 
 // Notify will succeed if there is a notify expectation waiting, otherwise it will fail
