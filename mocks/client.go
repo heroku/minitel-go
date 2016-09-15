@@ -27,17 +27,17 @@ type MockClient struct {
 }
 
 var (
-	errNoMoreExpectations = errors.New("no more expecations")
+	errNoMoreExpectations = errors.New("no more expectations")
 )
 
 // NewMockClient returns a client that satisfies minitel.Client, but provides additional
 // methods to be used for setting expectations around calls to Notify and Followup.
-func NewMockClient(t ErrorReporter) (*MockClient, error) {
+func NewMockClient(t ErrorReporter) *MockClient {
 	return &MockClient{
 		t:                    t,
 		notifyExpectations:   make([]error, 0),
 		followupExpectations: make([]error, 0),
-	}, nil
+	}
 }
 
 // Notify will succeed if there is a notify expectation waiting, otherwise it will fail
@@ -53,7 +53,7 @@ func (c *MockClient) Notify(p minitel.Payload) (result minitel.Result, err error
 		}
 		return minitel.Result{}, next
 	}
-	c.t.Errorf("no more notify expecations")
+	c.t.Errorf("no more notify expectations")
 	return minitel.Result{}, errNoMoreExpectations
 }
 
@@ -71,7 +71,7 @@ func (c *MockClient) Followup(id, body string) (result minitel.Result, err error
 		return minitel.Result{}, next
 	}
 
-	c.t.Errorf("no more followup expecations")
+	c.t.Errorf("no more followup expectations")
 	return minitel.Result{}, errNoMoreExpectations
 }
 
