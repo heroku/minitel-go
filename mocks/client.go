@@ -14,14 +14,19 @@ type ErrorReporter interface {
 	Errorf(string, ...interface{})
 }
 
+type response struct {
+	result minitel.Result
+	err    error
+}
+
 // MockClient implements minitel.Client
 // Using the additional FollowupAndExpect..., and NotifyAndExpect..., one can
 // mock successful and erroneous calls to the methods to ensure code handles
 // these cases appropriately.
 type MockClient struct {
 	t                    ErrorReporter
-	notifyExpectations   []error
-	followupExpectations []error
+	notifyExpectations   []response
+	followupExpectations []response
 
 	m sync.Mutex
 }
@@ -34,9 +39,7 @@ var (
 // methods to be used for setting expectations around calls to Notify and Followup.
 func NewMockClient(t ErrorReporter) *MockClient {
 	return &MockClient{
-		t:                    t,
-		notifyExpectations:   make([]error, 0),
-		followupExpectations: make([]error, 0),
+		t: t,
 	}
 }
 
@@ -47,11 +50,7 @@ func (c *MockClient) Notify(p minitel.Payload) (result minitel.Result, err error
 	if len(c.notifyExpectations) > 0 {
 		next := c.notifyExpectations[0]
 		c.notifyExpectations = c.notifyExpectations[1:]
-
-		if next == nil {
-			return minitel.Result{Id: uuid.New()}, nil
-		}
-		return minitel.Result{}, next
+		return next.result, next.err
 	}
 	c.t.Errorf("no more notify expectations")
 	return minitel.Result{}, errNoMoreExpectations
@@ -65,10 +64,7 @@ func (c *MockClient) Followup(id, body string) (result minitel.Result, err error
 	if len(c.followupExpectations) > 0 {
 		next := c.followupExpectations[0]
 		c.followupExpectations = c.followupExpectations[1:]
-		if next == nil {
-			return minitel.Result{Id: uuid.New()}, nil
-		}
-		return minitel.Result{}, next
+		return next.result, next.err
 	}
 
 	c.t.Errorf("no more followup expectations")
@@ -76,11 +72,13 @@ func (c *MockClient) Followup(id, body string) (result minitel.Result, err error
 }
 
 // NotifyAndExpectSuccess sets an expectation that Notify will be called, and will succeed
-func (c *MockClient) NotifyAndExpectSuccess() {
+func (c *MockClient) NotifyAndExpectSuccess() string {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.notifyExpectations = append(c.notifyExpectations, nil)
+	resultUUID := uuid.New()
+	c.notifyExpectations = append(c.notifyExpectations, response{result: minitel.Result{Id: resultUUID}})
+	return resultUUID
 }
 
 // NotifyAndExpectFailure sets an expectation that Notify will be called, and will not succeed
@@ -88,15 +86,17 @@ func (c *MockClient) NotifyAndExpectFailure(err error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.notifyExpectations = append(c.notifyExpectations, err)
+	c.notifyExpectations = append(c.notifyExpectations, response{err: err})
 }
 
 // FollowupAndExpectSuccess sets an expectation that Followup will be called, and will succeed
-func (c *MockClient) FollowupAndExpectSuccess() {
+func (c *MockClient) FollowupAndExpectSuccess() string {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.followupExpectations = append(c.followupExpectations, nil)
+	resultUUID := uuid.New()
+	c.followupExpectations = append(c.followupExpectations, response{result: minitel.Result{Id: resultUUID}})
+	return resultUUID
 }
 
 // FollowupAndExpectFailure sets an expectation that Followup will be called, and will not succeed
@@ -104,7 +104,7 @@ func (c *MockClient) FollowupAndExpectFailure(err error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.followupExpectations = append(c.followupExpectations, err)
+	c.followupExpectations = append(c.followupExpectations, response{err: err})
 }
 
 // ExpectDone reports an error if there are pending expectations.

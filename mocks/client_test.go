@@ -32,14 +32,14 @@ func TestNotifySuccess(t *testing.T) {
 
 	errFoo := errors.New("error foo")
 	client := NewMockClient(r)
-	client.NotifyAndExpectSuccess()
+	expectedUUID := client.NotifyAndExpectSuccess()
 	client.NotifyAndExpectFailure(errFoo)
 
 	res, err := client.Notify(minitel.Payload{})
 	if err != nil {
 		t.Errorf("Expected success, got failure = %q", err)
-	} else if res.Id == "" {
-		t.Errorf("Expected result with non empty Id")
+	} else if res.Id != expectedUUID {
+		t.Errorf("Expected %s, got %s", expectedUUID, res.Id)
 	}
 
 	res, err = client.Notify(minitel.Payload{})
@@ -60,14 +60,14 @@ func TestFollowupSuccess(t *testing.T) {
 
 	errFoo := errors.New("error foo")
 	client := NewMockClient(r)
-	client.FollowupAndExpectSuccess()
+	expectedUUID := client.FollowupAndExpectSuccess()
 	client.FollowupAndExpectFailure(errFoo)
 
 	res, err := client.Followup("id", "body")
 	if err != nil {
 		t.Errorf("Expected success, got failure = %q", err)
-	} else if res.Id == "" {
-		t.Errorf("Expected result with non empty Id")
+	} else if res.Id != expectedUUID {
+		t.Errorf("Expected %s, got %s", expectedUUID, res.Id)
 	}
 
 	res, err = client.Followup("id", "body")
