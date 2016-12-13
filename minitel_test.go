@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestPayloadCreation(t *testing.T) {
@@ -103,5 +105,62 @@ func TestClient(t *testing.T) {
 	}
 	if res.Id != "ffff27f8-589f-45b1-914e-dd613feaf4dc" {
 		t.Fatal("Expected result id to be ffff27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
+	}
+}
+
+func TestScrubCredentials(t *testing.T) {
+	u := "http://foo:bar@localhost"
+	c, err := New(u)
+	if err != nil {
+		t.Fatalf("Error in New(%q): %q", u, err)
+	}
+
+	ac, ok := c.(*client)
+	if !ok {
+		t.Fatalf("Client should actually be a *client")
+	}
+
+	if strings.Contains(ac.url, "foo:bar") {
+		t.Errorf("username and password were not scrubbed from URL")
+	}
+	if ac.user != "foo" || ac.pass != "bar" {
+		t.Errorf("basic auth was not extracted from URL")
+	}
+}
+
+func TestScrubCredentialsFromError(t *testing.T) {
+	oldHTTP := HTTPClient
+	defer func() {
+		HTTPClient = oldHTTP
+	}()
+
+	// Aggressively timeout the client to give us an error containing a
+	// URL
+	HTTPClient = &http.Client{Timeout: time.Duration(1)}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(429)
+	}))
+	defer srv.Close()
+
+	u := strings.Replace(srv.URL, "http://", "http://foo:bar@", 1)
+	c, err := New(u)
+	if err != nil {
+		t.Fatalf("Error in New(%q): %q", u, err)
+	}
+
+	p := Payload{
+		Title: "Hello",
+		Body:  "DB on fire!",
+	}
+	p.Target.Id = "93f90f07-bbe3-433d-806d-2d01bc5ae1f2"
+
+	_, err = c.Notify(p)
+
+	es := err.Error()
+
+	// If the error contains a URL, it better not contain the creds.
+	if strings.Contains(es, "http://") && strings.Contains(es, "foo:bar") {
+		t.Errorf("Credentials have not been scrubbed from URL")
 	}
 }

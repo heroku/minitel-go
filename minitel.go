@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -18,6 +19,8 @@ const (
 	User
 	Email
 )
+
+var HTTPClient = http.DefaultClient
 
 func (t Type) MarshalJSON() ([]byte, error) {
 	switch t {
@@ -88,14 +91,27 @@ type Client interface {
 
 func New(URL string) (Client, error) {
 	// Validate the URL parses.
-	if _, err := url.Parse(URL); err != nil {
+	u, err := url.Parse(URL)
+	if err != nil {
 		return nil, err
 	}
-	return &client{url: URL}, nil
+
+	var user, pass string
+	if u.User != nil {
+		user = u.User.Username()
+		pass, _ = u.User.Password()
+		u.User = nil
+	}
+
+	return &client{
+		url:  u.String(),
+		user: user,
+		pass: pass,
+	}, nil
 }
 
 type client struct {
-	url string
+	url, user, pass string
 }
 
 func (c *client) Notify(p Payload) (result Result, err error) {
@@ -111,8 +127,14 @@ func (c *client) Notify(p Payload) (result Result, err error) {
 		return result, err
 	}
 
+	req, err := c.postRequest(c.url+"/producer/messages", buf)
+	if err != nil {
+		return result, err
+	}
+
 	// Do the HTTP POST
-	resp, err := http.Post(c.url+"/producer/messages", "application/json", buf)
+	resp, err := HTTPClient.Do(req)
+
 	if err != nil {
 		return result, err
 	}
@@ -139,8 +161,14 @@ func (c *client) Followup(id, body string) (result Result, err error) {
 		return result, err
 	}
 
-	// Do the HTTP POST
-	resp, err := http.Post(c.url+"/producer/messages/"+id+"/followups", "application/json", buf)
+	req, err := c.postRequest(c.url+"/producer/messages/"+id+"/followups", buf)
+	if err != nil {
+		return result, err
+	}
+
+	// Do the HTTP Post
+	resp, err := HTTPClient.Do(req)
+
 	if err != nil {
 		return result, err
 	}
@@ -157,4 +185,17 @@ func (c *client) Followup(id, body string) (result Result, err error) {
 		return result, err
 	}
 	return result, nil
+}
+
+func (c *client) postRequest(url string, buf io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.user != "" || c.pass != "" {
+		req.SetBasicAuth(c.user, c.pass)
+	}
+	req.Header.Set("content-type", "application/json")
+	return req, err
 }
