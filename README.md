@@ -3,12 +3,12 @@
 
 ```go
 
-payload := minitel.Payload{
+payload := minitel.Notification{
 	Title: "Your DB is on fire!",
 	Body: "...",
 }
 
-payload.Target.Id = "84838298-989d-4409-b148-6abef06df43f"
+payload.Target.ID = "84838298-989d-4409-b148-6abef06df43f"
 payload.Target.Type = minitel.App
 
 payload.Action.Label = "View Invoice"

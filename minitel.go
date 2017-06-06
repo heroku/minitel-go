@@ -12,85 +12,78 @@ import (
 	"github.com/pborman/uuid"
 )
 
-type Type int
+// Type of Notification.
+type Type string
 
+// Known Telex notification target ypes.
 const (
-	App Type = iota
-	User
-	Email
+	App   Type = "app"
+	User  Type = "user"
+	Email Type = "email"
 )
 
-var HTTPClient = http.DefaultClient
-
-func (t Type) MarshalJSON() ([]byte, error) {
-	switch t {
-	case App:
-		return []byte(`"app"`), nil
-	case User:
-		return []byte(`"user"`), nil
-	case Email:
-		return []byte(`"email"`), nil
-	default:
-		return []byte(""), fmt.Errorf("unknown Type: %d", t)
-	}
-}
-
-func (t *Type) UnmarshalJSON(raw []byte) error {
-	switch string(raw) {
-	case `"app"`:
-		*t = App
-		return nil
-	case `"user"`:
-		*t = User
-		return nil
-	case `"email"`:
-		*t = Email
-		return nil
-	default:
-		return errors.New("can't unmarshal Type")
-	}
-}
-
-type Payload struct {
+// Notification message accepted by Telex.
+type Notification struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
 
-	Target struct {
-		Type Type   `json:"type"`
-		Id   string `json:"id"`
-	} `json:"target"`
+	Target Target `json:"target"`
+	Action Action `json:"action"`
+}
 
-	Action struct {
-		Label string `json:"label"`
-		URL   string `json:"url"`
-	} `json:"action"`
+// Target portion of a Telex payload. Defined separately to ease construction
+// via composite literals.
+type Target struct {
+	Type Type   `json:"type"`
+	ID   string `json:"id"`
+}
+
+// Action portion of a Telex payload. Defined separately to ease construction
+// via composite literals.
+type Action struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
 }
 
 var (
-	errNoId      = errors.New("minitel: Missing Target.Id in Payload")
-	errIdNotUUID = errors.New("minitel: Target.Id not a UUID")
+	errNoID                 = errors.New("minitel: Missing Target.ID in Notification")
+	errIDNotUUID            = errors.New("minitel: Target.ID not a UUID")
+	errNoTypeSpecified      = errors.New("minitel: Missing Target.Type in Notification")
+	errUnknownTypeSpecified = errors.New("minitel: Target.Type specified ")
 )
 
-func (p Payload) Validate() error {
-	if p.Target.Id == "" {
-		return errNoId
-	} else if res := uuid.Parse(p.Target.Id); res == nil {
-		return errIdNotUUID
+// Validate that a Notification contains everything it needs to.
+func (n Notification) Validate() error {
+	if n.Target.ID == "" {
+		return errNoID
+	}
+	if res := uuid.Parse(n.Target.ID); res == nil {
+		return errIDNotUUID
+	}
+	if n.Target.Type == "" {
+		return errNoTypeSpecified
+	}
+	switch n.Target.Type {
+	case App, User, Email:
+	default:
+		return fmt.Errorf("minitel: Specified Target.Type is unknown: %s", n.Target.Type)
 	}
 	return nil
 }
 
+// Result from telex containing the ID of the created notification.
 type Result struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
-type Client interface {
-	Notify(p Payload) (Result, error)
-	Followup(id string, body string) (Result, error)
+// Client for communicating with telex.
+type Client struct {
+	url, user, pass string
+	*http.Client
 }
 
-func New(URL string) (Client, error) {
-	// Validate the URL parses.
+// New Telex client targeted at the telex service located at the provided URL.
+func New(URL string) (*Client, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
@@ -103,49 +96,42 @@ func New(URL string) (Client, error) {
 		u.User = nil
 	}
 
-	return &client{
-		url:  u.String(),
-		user: user,
-		pass: pass,
+	return &Client{
+		url:    u.String(),
+		user:   user,
+		pass:   pass,
+		Client: http.DefaultClient,
 	}, nil
 }
 
-type client struct {
-	url, user, pass string
-}
-
-func (c *client) Notify(p Payload) (result Result, err error) {
-	// Validate the payload
-	if err := p.Validate(); err != nil {
+// Notify Telex.
+func (c *Client) Notify(n Notification) (result Result, err error) {
+	// Validate the notification before trying to send.
+	if err := n.Validate(); err != nil {
 		return result, err
 	}
 
-	// Prepare the buffer
-	buf := &bytes.Buffer{}
-	enc := json.NewEncoder(buf)
-	if err := enc.Encode(p); err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(n); err != nil {
 		return result, err
 	}
 
-	req, err := c.postRequest(c.url+"/producer/messages", buf)
+	req, err := c.postRequest(c.url+"/producer/messages", &buf)
 	if err != nil {
 		return result, err
 	}
 
-	// Do the HTTP POST
-	resp, err := HTTPClient.Do(req)
-
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return result, err
 	}
 	defer resp.Body.Close()
 
-	// Validate http status code
 	if resp.StatusCode != http.StatusCreated {
 		return result, fmt.Errorf("minitel: Expected 201: Got %d", resp.StatusCode)
 	}
 
-	// Decode the response
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&result); err != nil {
 		return result, err
@@ -153,33 +139,30 @@ func (c *client) Notify(p Payload) (result Result, err error) {
 	return result, nil
 }
 
-func (c *client) Followup(id, body string) (result Result, err error) {
-	// Prepare the buffer
-	buf := &bytes.Buffer{}
-	enc := json.NewEncoder(buf)
-	if err := enc.Encode(map[string]string{"body": body}); err != nil {
+// Followup adds some additional text to the previously created notification
+// identified by id.
+func (c *Client) Followup(id, text string) (result Result, err error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(map[string]string{"body": text}); err != nil {
 		return result, err
 	}
 
-	req, err := c.postRequest(c.url+"/producer/messages/"+id+"/followups", buf)
+	req, err := c.postRequest(c.url+"/producer/messages/"+id+"/followups", &buf)
 	if err != nil {
 		return result, err
 	}
 
-	// Do the HTTP Post
-	resp, err := HTTPClient.Do(req)
-
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return result, err
 	}
 	defer resp.Body.Close()
 
-	// Validate http status code
 	if resp.StatusCode != http.StatusCreated {
 		return result, fmt.Errorf("minitel: Expected 201: Got %d", resp.StatusCode)
 	}
 
-	// Decode the response
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&result); err != nil {
 		return result, err
@@ -187,7 +170,7 @@ func (c *client) Followup(id, body string) (result Result, err error) {
 	return result, nil
 }
 
-func (c *client) postRequest(url string, buf io.Reader) (*http.Request, error) {
+func (c *Client) postRequest(url string, buf io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		return nil, err
