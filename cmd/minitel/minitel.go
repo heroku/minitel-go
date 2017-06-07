@@ -24,7 +24,7 @@ func getBody() string {
 	return string(body)
 }
 
-func getClient() minitel.Client {
+func getClient() *minitel.Client {
 	url := os.Getenv("TELEX_URL")
 	pos := flag.Args()
 	if len(pos) > 0 {
@@ -49,23 +49,22 @@ func post() {
 	if *targetID == "" || *argType == "" {
 		flag.Usage()
 		os.Exit(1)
-	} else {
-		switch *argType {
-		case "app":
-			targetType = minitel.App
-		case "user":
-			targetType = minitel.User
-		default:
-			fmt.Fprintf(os.Stderr, "unknown target type: %q", *argType)
-			os.Exit(1)
-		}
+	}
+	switch *argType {
+	case "app":
+		targetType = minitel.App
+	case "user":
+		targetType = minitel.User
+	default:
+		fmt.Fprintf(os.Stderr, "unknown target type: %q", *argType)
+		os.Exit(1)
 	}
 
-	payload := minitel.Payload{
+	payload := minitel.Notification{
 		Title: *title,
 		Body:  getBody(),
 	}
-	payload.Target.Id = *targetID
+	payload.Target.ID = *targetID
 	payload.Target.Type = targetType
 
 	res, err := getClient().Notify(payload)
@@ -73,7 +72,7 @@ func post() {
 		fmt.Fprintf(os.Stderr, "received the following error: %q", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Posted message. ID=%q", res.Id)
+	fmt.Printf("Posted message. ID=%q", res.ID)
 }
 
 func followup() {
@@ -82,7 +81,7 @@ func followup() {
 		fmt.Fprintf(os.Stderr, "received the following error: %q", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Posted followup message to %q. ID=%q", *followupID, res.Id)
+	fmt.Printf("Posted followup message to %q. ID=%q", *followupID, res.ID)
 	return
 }
 
