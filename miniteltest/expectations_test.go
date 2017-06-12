@@ -95,6 +95,11 @@ func TestWait(t *testing.T) {
 			if finished := ts.Wait(100 * time.Millisecond); finished != tc.finished {
 				t.Errorf("expected Wait() to return %t, but got %t", tc.finished, finished)
 			}
+
+			err := ts.ExpectDone()
+			if err != nil && tc.finished {
+				t.Fatalf("ts.ExpectDone(): %v", err)
+			}
 		})
 	}
 }
