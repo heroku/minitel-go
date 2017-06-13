@@ -3,7 +3,6 @@ package miniteltest
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -180,14 +179,17 @@ func (ts *TestServer) Wait(max time.Duration) bool {
 	}
 }
 
+// Fataler is an interface that matches http://godoc.org/testing#T.Fatal
+type Fataler interface {
+	Fatal(...interface{})
+}
+
 // ExpectDone returns a non-nil error when unfulfulled expectations are present in
 // the test server.
-func (ts *TestServer) ExpectDone() error {
+func (ts *TestServer) ExpectDone(t Fataler) {
 	if len(ts.notifyResponses) != 0 || len(ts.followupResponses) != 0 {
-		return errors.New("unfulfulled expectations present in this test server")
+		t.Fatal("unfulfulled expectations present in this test server")
 	}
-
-	return nil
 }
 
 // GenerateHTTPResponse purposes with the given Result and StatusCode.
