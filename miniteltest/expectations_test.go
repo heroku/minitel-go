@@ -95,6 +95,10 @@ func TestWait(t *testing.T) {
 			if finished := ts.Wait(100 * time.Millisecond); finished != tc.finished {
 				t.Errorf("expected Wait() to return %t, but got %t", tc.finished, finished)
 			}
+
+			if tc.finished {
+				ts.ExpectDone(t)
+			}
 		})
 	}
 }
@@ -116,6 +120,25 @@ func TestExpectNotify(t *testing.T) {
 	}
 	if r.ID == "" {
 		t.Error("expected the ID to not be blank, but it was")
+	}
+}
+
+type testExpectDoneFatal bool
+
+func (t *testExpectDoneFatal) Fatal(...interface{}) {
+	*t = true
+}
+
+func TestExpectDone(t *testing.T) {
+	ts := NewServer()
+	defer ts.Close()
+
+	ts.ExpectNotify()
+	var tdf testExpectDoneFatal = false
+	ts.ExpectDone(&tdf)
+
+	if !bool(tdf) {
+		t.Fatalf("expected tdf to be true, got: %v", tdf)
 	}
 }
 
