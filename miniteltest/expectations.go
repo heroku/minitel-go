@@ -156,10 +156,10 @@ func (ts *TestServer) ExpectFollowup(r ...*http.Response) {
 	ts.followupResponses = append(ts.followupResponses, r...)
 }
 
-// Wait up to max duration for all notify and followup responses to be sent.
-// Return true if they have been sent. If they haven't been sent after the max
-// duration then return false.
-func (ts *TestServer) Wait(max time.Duration) bool {
+// ExpectDone waits up to max duration for all notify and followup responses to
+// be sent. Returns true if they have been sent. If they haven't been sent after
+// the max duration then return false.
+func (ts *TestServer) ExpectDone(max time.Duration) bool {
 	expire := time.NewTimer(max)
 	defer expire.Stop()
 	for {
