@@ -17,9 +17,10 @@ type Type string
 
 // Known Telex notification target ypes.
 const (
-	App   Type = "app"
-	User  Type = "user"
-	Email Type = "email"
+	App       Type = "app"
+	User      Type = "user"
+	Email     Type = "email"
+	Dashboard Type = "dashboard"
 )
 
 // Notification message accepted by Telex.
