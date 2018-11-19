@@ -18,7 +18,7 @@ import (
 // TestServer implements the basic interactions with Minitel for the
 // purposes of testing. Use ExpectNotify and ExpectFollowup to register
 // http.Responses with the handler for controlled testing of responses. Or call
-// those methods with nil to get a generic response. The Wait() method can be
+// those methods with nil to get a generic response. The ExpectDone() method can be
 // used to ensure that all expectations have happened within the provided
 // timeout, which is useful for when the client is used async.
 type TestServer struct {

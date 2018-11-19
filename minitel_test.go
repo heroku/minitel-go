@@ -80,7 +80,7 @@ func TestClient(t *testing.T) {
 		t.Fatalf("Expected result id to be ffff27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
 	}
 
-	if finished := ts.Wait(time.Second); !finished {
+	if finished := ts.ExpectDone(time.Second); !finished {
 		t.Fatalf("Expected no pending expectations, but some still exist")
 	}
 }
@@ -98,4 +98,57 @@ func TestScrubCredentials(t *testing.T) {
 	if c.user != "foo" || c.pass != "bar" {
 		t.Errorf("basic auth was not extracted from URL")
 	}
+}
+
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name         string
+		notification Notification
+		wantErr      error
+	}{
+		{
+			name:         "no target ID",
+			notification: Notification{},
+			wantErr:      errNoID,
+		},
+		{
+			name:         "target ID not UUID",
+			notification: Notification{Target: Target{ID: "123"}},
+			wantErr:      errIDNotUUID,
+		},
+		{
+			name:         "no target type specified",
+			notification: Notification{Target: Target{ID: "bc31ed62-0204-40e5-86cf-b25a001b20db"}},
+			wantErr:      errNoTypeSpecified,
+		},
+		{
+			name:         "target type App",
+			notification: Notification{Target: Target{ID: "bc31ed62-0204-40e5-86cf-b25a001b20db", Type: App}},
+			wantErr:      nil,
+		},
+		{
+			name:         "target type Email",
+			notification: Notification{Target: Target{ID: "bc31ed62-0204-40e5-86cf-b25a001b20db", Type: Email}},
+			wantErr:      nil,
+		},
+		{
+			name:         "target type User",
+			notification: Notification{Target: Target{ID: "bc31ed62-0204-40e5-86cf-b25a001b20db", Type: User}},
+			wantErr:      nil,
+		},
+		{
+			name:         "target type Dashboard",
+			notification: Notification{Target: Target{ID: "bc31ed62-0204-40e5-86cf-b25a001b20db", Type: Dashboard}},
+			wantErr:      nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if gotErr := test.notification.Validate(); test.wantErr != gotErr {
+				t.Fatalf("want error: %v, got %v", test.wantErr, gotErr)
+			}
+		})
+	}
+
 }

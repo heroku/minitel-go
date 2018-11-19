@@ -65,7 +65,7 @@ func (n Notification) Validate() error {
 		return errNoTypeSpecified
 	}
 	switch n.Target.Type {
-	case App, User, Email:
+	case App, User, Email, Dashboard:
 	default:
 		return fmt.Errorf("minitel: Specified Target.Type is unknown: %s", n.Target.Type)
 	}
