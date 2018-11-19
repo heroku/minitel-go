@@ -17,9 +17,10 @@ type Type string
 
 // Known Telex notification target ypes.
 const (
-	App   Type = "app"
-	User  Type = "user"
-	Email Type = "email"
+	App       Type = "app"
+	User      Type = "user"
+	Email     Type = "email"
+	Dashboard Type = "dashboard"
 )
 
 // Notification message accepted by Telex.
@@ -64,7 +65,7 @@ func (n Notification) Validate() error {
 		return errNoTypeSpecified
 	}
 	switch n.Target.Type {
-	case App, User, Email:
+	case App, User, Email, Dashboard:
 	default:
 		return fmt.Errorf("minitel: Specified Target.Type is unknown: %s", n.Target.Type)
 	}
