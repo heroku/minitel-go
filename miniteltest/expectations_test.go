@@ -110,9 +110,12 @@ func TestExpectNotify(t *testing.T) {
 		t.Fatal("unable to setup test client: ", err)
 	}
 
-	_, err = c.Notify(n)
+	r, err := c.Notify(n)
 	if err != nil {
 		t.Fatal("unexpected error: ", err)
+	}
+	if r.ID == "" {
+		t.Error("expected the ID to not be blank, but it was")
 	}
 }
 
@@ -141,9 +144,12 @@ func TestExpectFollowup(t *testing.T) {
 		t.Fatal("unable to setup test client: ", err)
 	}
 
-	_, err = c.Followup("testid", "testtext")
+	r, err := c.Followup("testid", "testtext")
 	if err != nil {
 		t.Fatal("unexpected error: ", err)
+	}
+	if r.ID == "" {
+		t.Error("expected the ID to not be blank, but it was")
 	}
 }
 
