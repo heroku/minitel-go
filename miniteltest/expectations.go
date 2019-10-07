@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 // TestServer implements the basic interactions with Minitel for the
@@ -71,7 +71,7 @@ func doResponse(resp *http.Response, w http.ResponseWriter) {
 	if resp == nil {
 		w.WriteHeader(http.StatusCreated)
 		enc := json.NewEncoder(w)
-		enc.Encode(result{ID: uuid.New()})
+		enc.Encode(result{ID: uuid.New().String()})
 		return
 	}
 	for k, v := range resp.Header {
