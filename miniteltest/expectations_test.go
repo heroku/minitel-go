@@ -92,7 +92,7 @@ func TestWait(t *testing.T) {
 				tc.process(c)
 			}
 
-			if finished := ts.Wait(100 * time.Millisecond); finished != tc.finished {
+			if finished := ts.ExpectDone(100 * time.Millisecond); finished != tc.finished {
 				t.Errorf("expected Wait() to return %t, but got %t", tc.finished, finished)
 			}
 		})
