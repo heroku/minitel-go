@@ -58,7 +58,6 @@ func (n Notification) Validate() error {
 	if n.Target.ID == "" {
 		return errNoID
 	}
-
 	if _, err := uuid.Parse(n.Target.ID); err != nil {
 		return errIDNotUUID
 	}
