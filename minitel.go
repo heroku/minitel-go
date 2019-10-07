@@ -75,7 +75,7 @@ func (n Notification) Validate() error {
 
 // Result from telex containing the ID of the created notification.
 type Result struct {
-	ID uuid.UUID `json:"id"`
+	ID string `json:"id"`
 }
 
 // Client for communicating with telex.

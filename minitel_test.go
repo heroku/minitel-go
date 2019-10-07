@@ -48,10 +48,10 @@ func TestClient(t *testing.T) {
 	defer ts.Close()
 
 	notifyUUID, _ := uuid.Parse("727d27f8-589f-45b1-914e-dd613feaf4dc")
-	ts.ExpectNotify(miniteltest.GenerateHTTPResponse(t, notifyUUID, http.StatusCreated))
+	ts.ExpectNotify(miniteltest.GenerateHTTPResponse(t, notifyUUID.String(), http.StatusCreated))
 
 	followUpUUID, _ := uuid.Parse("ffff27f8-589f-45b1-914e-dd613feaf4dc")
-	ts.ExpectFollowup(miniteltest.GenerateHTTPResponse(t, followUpUUID, http.StatusCreated))
+	ts.ExpectFollowup(miniteltest.GenerateHTTPResponse(t, followUpUUID.String(), http.StatusCreated))
 
 	c, err := New(ts.URL)
 	if err != nil {
@@ -69,7 +69,7 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != notifyUUID {
+	if res.ID != notifyUUID.String() {
 		t.Fatalf("Expected result id to be 727d27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
 	}
 
@@ -77,7 +77,7 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != followUpUUID {
+	if res.ID != followUpUUID.String() {
 		t.Fatalf("Expected result id to be ffff27f8-589f-45b1-914e-dd613feaf4dc (%+v)", res)
 	}
 
