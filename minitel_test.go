@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/heroku/minitel-go/miniteltest"
 )
 
@@ -46,10 +47,10 @@ func TestClient(t *testing.T) {
 	ts := miniteltest.NewServer()
 	defer ts.Close()
 
-	notifyUUID := "727d27f8-589f-45b1-914e-dd613feaf4dc"
+	notifyUUID, _ := uuid.Parse("727d27f8-589f-45b1-914e-dd613feaf4dc")
 	ts.ExpectNotify(miniteltest.GenerateHTTPResponse(t, notifyUUID, http.StatusCreated))
 
-	followUpUUID := "ffff27f8-589f-45b1-914e-dd613feaf4dc"
+	followUpUUID, _ := uuid.Parse("ffff27f8-589f-45b1-914e-dd613feaf4dc")
 	ts.ExpectFollowup(miniteltest.GenerateHTTPResponse(t, followUpUUID, http.StatusCreated))
 
 	c, err := New(ts.URL)

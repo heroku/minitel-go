@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 // Type of Notification.
@@ -58,7 +58,8 @@ func (n Notification) Validate() error {
 	if n.Target.ID == "" {
 		return errNoID
 	}
-	if res := uuid.Parse(n.Target.ID); res == nil {
+
+	if _, err := uuid.Parse(n.Target.ID); err != nil {
 		return errIDNotUUID
 	}
 	if n.Target.Type == "" {
@@ -74,7 +75,7 @@ func (n Notification) Validate() error {
 
 // Result from telex containing the ID of the created notification.
 type Result struct {
-	ID string `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 // Client for communicating with telex.

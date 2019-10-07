@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 // TestServer implements the basic interactions with Minitel for the
@@ -31,7 +31,7 @@ type TestServer struct {
 
 // Here so we don't have to import minitel
 type result struct {
-	ID string `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 // NewServer returns a prepared TestServer which should be used like a httptest.Server
@@ -181,7 +181,7 @@ func (ts *TestServer) ExpectDone(max time.Duration) bool {
 
 // GenerateHTTPResponse purposes with the given Result and StatusCode.
 // This is here to reduce boilerplate construction in the common case.
-func GenerateHTTPResponse(t *testing.T, id string, c int) *http.Response {
+func GenerateHTTPResponse(t *testing.T, id uuid.UUID, c int) *http.Response {
 	rb, err := json.Marshal(result{ID: id})
 	if err != nil {
 		t.Fatalf("unable to GenerateHTTPResponse(%q, %d) test: %s", id, c, err)
